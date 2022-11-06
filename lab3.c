@@ -4,7 +4,13 @@
 #include <string.h>
 #include <unistd.h>
 
+FILE *gameData;
+
 int main(int argc, char *argv[]) {
+
+  // --------------------------------------------------------------
+  // ------------- Captura parametros de entrada -------------
+  // --------------------------------------------------------------
   // Se inicializan las variables para capturar la informacion desde argc.
   int flags;
   char file[256];
@@ -16,7 +22,6 @@ int main(int argc, char *argv[]) {
   int showData = 0;
   FILE *og;
   int x = 0;
-  // Se obtienen la informacion de las flags correspondientes
   while ((flags = getopt(argc, argv, "i:o:d:p:c:t:b")) != -1)
     switch (flags) {
     case 'i':
@@ -57,11 +62,14 @@ int main(int argc, char *argv[]) {
       showData = 1;
       break;
     }
-  if (!(og = fopen(file, "r"))) {
-    perror("ERROR");
+  // --------------------------------------------------------------
+  // ------------- Finalizacion parametros de entrada -------------
+  // --------------------------------------------------------------
+  //
+  // Leo el archivo global, error en caso de que no se pueda leer
+  if (!(gameData = fopen(file, "r"))) {
+    perror("Error: Archivo inexistente o corrupto");
     return 0;
   }
-  printf("Hola mundo\n");
-  printf("Usando hebras!\n");
-  return 0;
+  return 1;
 }

@@ -10,3 +10,7 @@ typedef struct game Game;
 
 Game *crearGame(int id, char name[], int age_restriction, float price,
                 int release, int year, int free, int win, int lin, int mac);
+Game *getGame(char string[MAX]);
+char *gameToString(Game X);
+Game *stringToGame(char stringGame[MAX]);
+int stringToBool(char string[20]);
