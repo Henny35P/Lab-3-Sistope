@@ -2,13 +2,13 @@
 CC = gcc
 CFLAGS = -g -Wall  # Flag to pass to gcc
 
-install:game lab2
+install:game lab3
 
 game: game.c game.h
 	$(CC) $(CFLAGS) -c game.c
 	
-lab2: lab2.c
-	$(CC) $(CFLAGS) -o lab2.o lab2.c queue.o game.o
+lab3: lab3.c
+	$(CC) $(CFLAGS) -o lab3.o lab3 game.o
 
 clean:
 

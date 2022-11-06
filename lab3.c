@@ -9,16 +9,15 @@ int main(int argc, char *argv[]) {
   int flags;
   char file[256];
   char exitFile[256];
-  char year[5];
-  char minPrice[10];
+  int year = 0;
+  int minPrice = 0;
+  int chunkSize = 1;
+  int threadsAmount = 1;
   int showData = 0;
   FILE *og;
   int x = 0;
   // Se obtienen la informacion de las flags correspondientes
-  if (x) {
-    printf("Hello World");
-  }
-  while ((flags = getopt(argc, argv, "i:o:d:p:b")) != -1)
+  while ((flags = getopt(argc, argv, "i:o:d:p:c:t:b")) != -1)
     switch (flags) {
     case 'i':
       strncpy(file, optarg, sizeof(file));
@@ -27,10 +26,32 @@ int main(int argc, char *argv[]) {
       strncpy(exitFile, optarg, sizeof(exitFile));
       break;
     case 'd':
-      strncpy(year, optarg, sizeof(year));
+      year = atoi(optarg);
+      if (year < 1980) {
+        printf("ERROR: año minimo debe ser mayor o igual a 1980");
+        exit(1);
+      }
       break;
     case 'p':
-      strncpy(minPrice, optarg, sizeof(minPrice));
+      minPrice = atoi(optarg);
+      if (!minPrice || minPrice > 100) {
+        printf("ERROR: Valor minimo debe ser mayor o igual a 0");
+        exit(1);
+      }
+      break;
+    case 'c':
+      chunkSize = atoi(optarg);
+      if (!chunkSize || threadsAmount > 100) {
+        printf("ERROR: Tamaño de chunk debe ser mayor a 0");
+        exit(1);
+      }
+      break;
+    case 't':
+      threadsAmount = atoi(optarg);
+      if (!threadsAmount || threadsAmount > 100) {
+        printf("ERROR: Cantidad de hilos debe ser mayor a 0 y menor a 100");
+        exit(1);
+      }
       break;
     case 'b':
       showData = 1;
