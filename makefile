@@ -8,7 +8,7 @@ game: game.c game.h
 	$(CC) $(CFLAGS) -c game.c
 	
 lab3: lab3.c
-	$(CC) $(CFLAGS) -o lab3.o lab3 game.o
+	$(CC) $(CFLAGS) -o lab3.o lab3.c game.o
 
 clean:
 

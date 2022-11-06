@@ -1,3 +1,6 @@
+#include "cvector.h"
+#include "cvector_utils.h"
+#include "game.h"
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -71,5 +74,6 @@ int main(int argc, char *argv[]) {
     perror("Error: Archivo inexistente o corrupto");
     return 0;
   }
+
   return 1;
 }
