@@ -24,6 +24,9 @@ void *readData(void *arg) {
     // Primero, encuentro de que año es el juego
     currentYear = currentGame.year;
     // Con una resta encuentro el index correspondiente
+    if (!currentYear) {
+      break;
+    }
     currentIndex = currentYear - startingYear;
     // Hago los calculos correspondientes
     if (currentGame.free) {
@@ -135,12 +138,12 @@ int main(int argc, char *argv[]) {
     GameData X = *crearData(i, "lorem", 0, "impsum", 100, 0, 0, 0, 0, 0, 0, "");
     cvector_push_back(yearlyData, X);
   }
-  printf("Funciona hasta aca!");
   // Inicializo la exclusion mutua
   pthread_mutex_init(&mutex, NULL);
+
   // Creo los hilos segun la cantidad ingresada
   for (int i = 0; i < threadsAmount; i++) {
-    pthread_create(&tid[i], NULL, readData, (void *)&tid[i]);
+    pthread_create(&tid[i], NULL, readData, NULL);
   }
   // Espero al termino de los hilos
   for (int i = 0; i < threadsAmount; i++) {
@@ -148,7 +151,7 @@ int main(int argc, char *argv[]) {
   }
 
   for (int i = 0; i < cvector_size(yearlyData); i++) {
-    printf("%s", yearlyData->maxName);
+    printf("%s\n", yearlyData->maxName);
   }
 
   return 1;
