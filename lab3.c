@@ -9,16 +9,18 @@
 
 FILE *gameData;
 int chunkSize, startingYear = 1990, finishingYear = 2030;
+int testGlobal = 0;
 pthread_mutex_t mutex;
 cvector_vector_type(GameData) yearlyData = NULL;
 
 void *readData(void *arg) {
   char row[MAX];
-  int readChunks = 0, currentYear = 0, currentIndex;
+  int readChunks = 0, currentYear = 0, currentIndex = 0;
   // Mientras el archivo no tenga EOF o el thread no haya leido su cantidad
   // de lineas especificadas
-  pthread_mutex_lock(&mutex);
   while (fgets(row, MAX, gameData) || chunkSize >= readChunks) {
+    testGlobal++;
+    pthread_mutex_lock(&mutex);
     Game currentGame = *getGame(row);
     // Mover estos calculos a una funcion independiente?
     // Primero, encuentro de que año es el juego
@@ -59,8 +61,8 @@ void *readData(void *arg) {
     yearlyData[currentIndex].sumPrice += currentGame.price;
     yearlyData[currentIndex].total++;
     readChunks++;
+    pthread_mutex_unlock(&mutex);
   }
-  pthread_mutex_unlock(&mutex);
   pthread_exit(NULL);
 }
 
@@ -149,9 +151,9 @@ int main(int argc, char *argv[]) {
   for (int i = 0; i < threadsAmount; i++) {
     pthread_join(tid[i], NULL);
   }
-
+  pthread_mutex_destroy(&mutex);
   for (int i = 0; i < cvector_size(yearlyData); i++) {
-    printf("%s\n", yearlyData->maxName);
+    printf("%s\n", yearlyData[i].maxName);
   }
 
   return 1;
