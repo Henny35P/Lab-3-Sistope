@@ -98,3 +98,23 @@ char *gameToString(Game X) {
            X.mac);
   return stringGame;
 }
+GameData *crearData(int year, char maxName[], float maxPrice, char minName[],
+                    float minPrice, float sumprice, int totalpagados, int win,
+                    int lin, int mac, int total, char juegosGratis[]) {
+
+  GameData *newData;
+  newData = (GameData *)malloc(sizeof(GameData));
+  newData->year = year;
+  strcpy(newData->maxName, maxName);
+  newData->maxPrice = maxPrice;
+  strcpy(newData->minName, minName);
+  newData->minPrice = minPrice;
+  newData->sumPrice = sumprice;
+  newData->totalpagados = totalpagados;
+  newData->win = win;
+  newData->lin = lin;
+  newData->mac = mac;
+  newData->total = total;
+  strcpy(newData->juegosGratis, juegosGratis);
+  return newData;
+}
