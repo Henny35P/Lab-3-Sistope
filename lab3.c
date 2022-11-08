@@ -135,6 +135,8 @@ int main(int argc, char *argv[]) {
   chunkSize = 2;
   threadsAmount = 10;
   pthread_t tid[threadsAmount];
+  char endRead[MAX], endString[MAX];
+  float division;
 
   // Creo un vector principal con los datos para cada año presente
   // Se les asigna datos genericos para llenar el vector
@@ -154,14 +156,29 @@ int main(int argc, char *argv[]) {
     pthread_join(tid[i], NULL);
   }
   int full = 0;
+
   for (int i = 0; i < cvector_size(yearlyData); i++) {
+    // Si el año recibio datos
     if (yearlyData[i].total) {
-      printf("%d-%d:%s\n", yearlyData[i].year, yearlyData[i].total,
-             yearlyData[i].maxName);
-      full += yearlyData[i].total;
+      printf("--------------------Año %d---------------------\n",
+             yearlyData[i].year);
+      printf("El juegos mas caro fue %s con %.1f\n", yearlyData[i].maxName,
+             yearlyData[i].maxPrice);
+      printf("El juegos mas caro fue %s con %.1f\n", yearlyData[i].minName,
+             yearlyData[i].minPrice);
+      printf("El precio promedio fue de $%.1f\n",
+             yearlyData[i].sumPrice / yearlyData[i].totalpagados);
+      printf("El porcentaje de juegos para windows fue de %.1f\n",
+             (division = (float)yearlyData[i].win * 100 / yearlyData[i].total));
+      printf("El porcentaje de juegos para Linux fue de %.1f\n",
+             (division = (float)yearlyData[i].lin * 100 / yearlyData[i].total)),
+          printf("El porcentaje de juegos para Mac fue de %.1f\n",
+                 (division =
+                      (float)yearlyData[i].mac * 100 / yearlyData[i].total));
+      printf("--------------------Juegos Gratis---------------------\n");
+      printf("%s\n", yearlyData[i].juegosGratis);
     }
   }
-  printf("%d\n", full);
   // cvector_free(yearlyData);
   // free(tid[threadsAmount]);
   fclose(gameData);
