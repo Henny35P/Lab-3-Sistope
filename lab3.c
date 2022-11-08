@@ -8,7 +8,7 @@
 #include <unistd.h>
 
 FILE *gameData;
-int chunkSize, startingYear = 1990, finishingYear = 2030;
+int chunkSize = 0, startingYear = 1990, finishingYear = 2030;
 int testGlobal = 0;
 pthread_mutex_t mutex;
 cvector_vector_type(GameData) yearlyData = NULL;
@@ -16,51 +16,53 @@ cvector_vector_type(GameData) yearlyData = NULL;
 void *readData(void *arg) {
   char row[MAX];
   int readChunks = 0, currentYear = 0, currentIndex = 0;
-  // Mientras el archivo no tenga EOF o el thread no haya leido su cantidad
-  // de lineas especificadas
-  while (fgets(row, MAX, gameData) || chunkSize >= readChunks) {
-    testGlobal++;
+  // Mientras el archivo no tenga EOF
+  while (feof(gameData) == 0) {
     pthread_mutex_lock(&mutex);
-    Game currentGame = *getGame(row);
-    // Mover estos calculos a una funcion independiente?
-    // Primero, encuentro de que año es el juego
-    currentYear = currentGame.year;
-    // Con una resta encuentro el index correspondiente
-    if (!currentYear) {
-      break;
-    }
-    currentIndex = currentYear - startingYear;
-    // Hago los calculos correspondientes
-    if (currentGame.free) {
-      strcat(yearlyData[currentIndex].juegosGratis, currentGame.name);
-      strcat(yearlyData[currentIndex].juegosGratis, "\n");
-    } else {
-      yearlyData[currentIndex].totalpagados++;
-    }
+    for (int i = 0; i < chunkSize; i++) {
+      if (!fgets(row, MAX, gameData))
+        break;
+      Game currentGame = *getGame(row);
+      // Mover estos calculos a una funcion independiente?
+      // Primero, encuentro de que año es el juego
+      currentYear = currentGame.year;
+      // Con una resta encuentro el index correspondiente
+      if (!currentYear) {
+        break;
+      }
+      currentIndex = currentYear - startingYear;
+      // Hago los calculos correspondientes
+      if (currentGame.free) {
+        strcat(yearlyData[currentIndex].juegosGratis, currentGame.name);
+        strcat(yearlyData[currentIndex].juegosGratis, "\n");
+      } else {
+        yearlyData[currentIndex].totalpagados++;
+      }
 
-    if (currentGame.price > yearlyData[currentIndex].maxPrice) {
-      strcpy(yearlyData[currentIndex].maxName, currentGame.name);
-      yearlyData[currentIndex].maxPrice = currentGame.price;
-    }
+      if (currentGame.price > yearlyData[currentIndex].maxPrice) {
+        strcpy(yearlyData[currentIndex].maxName, currentGame.name);
+        yearlyData[currentIndex].maxPrice = currentGame.price;
+      }
 
-    if (currentGame.price < yearlyData[currentIndex].minPrice &&
-        currentGame.price != 0) {
-      strcpy(yearlyData[currentIndex].minName, currentGame.name);
-      yearlyData[currentIndex].minPrice = currentGame.price;
-    }
+      if (currentGame.price < yearlyData[currentIndex].minPrice &&
+          currentGame.price != 0) {
+        strcpy(yearlyData[currentIndex].minName, currentGame.name);
+        yearlyData[currentIndex].minPrice = currentGame.price;
+      }
 
-    if (currentGame.win) {
-      yearlyData[currentIndex].win++;
+      if (currentGame.win) {
+        yearlyData[currentIndex].win++;
+      }
+      if (currentGame.lin) {
+        yearlyData[currentIndex].lin++;
+      }
+      if (currentGame.mac) {
+        yearlyData[currentIndex].mac++;
+      }
+      yearlyData[currentIndex].sumPrice += currentGame.price;
+      yearlyData[currentIndex].total++;
+      readChunks++;
     }
-    if (currentGame.lin) {
-      yearlyData[currentIndex].lin++;
-    }
-    if (currentGame.mac) {
-      yearlyData[currentIndex].mac++;
-    }
-    yearlyData[currentIndex].sumPrice += currentGame.price;
-    yearlyData[currentIndex].total++;
-    readChunks++;
     pthread_mutex_unlock(&mutex);
   }
   pthread_exit(NULL);
@@ -104,7 +106,7 @@ int main(int argc, char *argv[]) {
       break;
     case 'c':
       chunkSize = atoi(optarg);
-      if (!chunkSize || threadsAmount > 100) {
+      if (!chunkSize || chunkSize > 500) {
         printf("ERROR: Tamaño de chunk debe ser mayor a 0");
         exit(1);
       }
@@ -130,8 +132,8 @@ int main(int argc, char *argv[]) {
     return 0;
   }
   // Testing variables!!
-  chunkSize = 6;
-  threadsAmount = 6;
+  chunkSize = 2;
+  threadsAmount = 10;
   pthread_t tid[threadsAmount];
 
   // Creo un vector principal con los datos para cada año presente
@@ -151,10 +153,18 @@ int main(int argc, char *argv[]) {
   for (int i = 0; i < threadsAmount; i++) {
     pthread_join(tid[i], NULL);
   }
-  pthread_mutex_destroy(&mutex);
+  int full = 0;
   for (int i = 0; i < cvector_size(yearlyData); i++) {
-    printf("%s\n", yearlyData[i].maxName);
+    if (yearlyData[i].total) {
+      printf("%d-%d:%s\n", yearlyData[i].year, yearlyData[i].total,
+             yearlyData[i].maxName);
+      full += yearlyData[i].total;
+    }
   }
-
+  printf("%d\n", full);
+  // cvector_free(yearlyData);
+  // free(tid[threadsAmount]);
+  fclose(gameData);
+  pthread_mutex_destroy(&mutex);
   return 1;
 }
