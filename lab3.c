@@ -12,16 +12,22 @@ int chunkSize = 0, startingYear = 1990, finishingYear = 2030;
 int testGlobal = 0;
 pthread_mutex_t mutex;
 cvector_vector_type(GameData) yearlyData = NULL;
+long int currentPos;
 
 void *readData(void *arg) {
   char row[MAX];
   int readChunks = 0, currentYear = 0, currentIndex = 0;
   // Mientras el archivo no tenga EOF
-  while (feof(gameData) == 0) {
+  while (1) {
     pthread_mutex_lock(&mutex);
     for (int i = 0; i < chunkSize; i++) {
-      if (!fgets(row, MAX, gameData))
-        break;
+
+      if (!fgets(row, MAX, gameData)) {
+        pthread_mutex_unlock(&mutex);
+        pthread_exit(NULL);
+        return 0;
+      }
+
       Game currentGame = *getGame(row);
       // Mover estos calculos a una funcion independiente?
       // Primero, encuentro de que año es el juego
@@ -62,6 +68,14 @@ void *readData(void *arg) {
       yearlyData[currentIndex].sumPrice += currentGame.price;
       yearlyData[currentIndex].total++;
       readChunks++;
+      // Reviso si proxima
+      currentPos = ftell(gameData);
+      if (!fgets(row, MAX, gameData)) {
+        pthread_mutex_unlock(&mutex);
+        pthread_exit(NULL);
+        return 0;
+      }
+      fseek(gameData, currentPos, SEEK_SET);
     }
     pthread_mutex_unlock(&mutex);
   }
@@ -132,8 +146,8 @@ int main(int argc, char *argv[]) {
     return 0;
   }
   // Testing variables!!
-  chunkSize = 2;
-  threadsAmount = 10;
+  chunkSize = 6;
+  threadsAmount = 40;
   pthread_t tid[threadsAmount];
   char endRead[MAX], endString[MAX];
   float division;
@@ -177,8 +191,10 @@ int main(int argc, char *argv[]) {
                       (float)yearlyData[i].mac * 100 / yearlyData[i].total));
       printf("--------------------Juegos Gratis---------------------\n");
       printf("%s\n", yearlyData[i].juegosGratis);
+      full += yearlyData[i].total;
     }
   }
+  printf("%d", full);
   // cvector_free(yearlyData);
   // free(tid[threadsAmount]);
   fclose(gameData);
