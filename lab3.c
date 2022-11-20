@@ -14,7 +14,66 @@ pthread_mutex_t mutex;
 cvector_vector_type(GameData) yearlyData = NULL;
 long int currentPos;
 
-void *readData(void *arg) {
+
+// Entradas: nombre de salida
+// Salidas: sin retorno
+// Descripcion:Funcion que recibe el nombre de salida del archivo generado, lo
+// lee y lo muestra por consola.
+void showResults(char *nombreSalida) {
+  FILE *fich;
+  if ((fich = fopen(nombreSalida, "r")) == NULL) {
+    printf(" Error en la apertura. Es posible que el fichero no exista \n ");
+  }
+  char *contents = NULL;
+  size_t len = 32;
+
+  while (getline(&contents, &len, fich) != -1) {
+    printf("%s", contents);
+  }
+  fclose(fich);
+  free(contents);
+}
+
+
+// Entradas: nombre de salida, año minimo y precio minimo
+// Salidas: sin retorno
+// Descripcion:Funcion que crea el archivo de salida
+
+void createExitFile(char exportFile[MAX], int minimunYear,int minimunPrice){
+  FILE *toExport;
+  toExport = fopen(exportFile,"w+");
+  float division;
+  int full = 0;
+  for (int i = 0; i < cvector_size(yearlyData); i++) {
+    // Si el año recibio datos
+    if (yearlyData[i].total && yearlyData[i].minPrice>=minimunPrice && yearlyData[i].year>=minimunYear){
+      fprintf(toExport,"--------------------Año %d---------------------\n",
+             yearlyData[i].year);
+      fprintf(toExport,"El juegos mas caro fue %s con %.1f\n", yearlyData[i].maxName,
+             yearlyData[i].maxPrice);
+      fprintf(toExport,"El juegos mas barato fue %s con %.1f\n", yearlyData[i].minName,
+             yearlyData[i].minPrice);
+      fprintf(toExport,"El precio promedio fue de $%.1f\n",
+             yearlyData[i].sumPrice / yearlyData[i].totalpagados);
+             full += yearlyData[i].total;
+      fprintf(toExport,"El porcentaje de juegos para windows fue de %.1f\n",
+             (division = (float)yearlyData[i].win * 100 / yearlyData[i].total));
+     fprintf(toExport,"El porcentaje de juegos para Linux fue de %.1f\n",
+             (division = (float)yearlyData[i].lin * 100 / yearlyData[i].total)),
+          fprintf(toExport,"El porcentaje de juegos para Mac fue de %.1f\n",
+                 (division =
+                      (float)yearlyData[i].mac * 100 / yearlyData[i].total));
+      fprintf(toExport,"--------------------Juegos Gratis---------------------/\n");
+      fprintf(toExport,"%s\n", yearlyData[i].juegosGratis);
+      full += yearlyData[i].total;
+    }
+  }
+  
+}
+// Entradas: Sin entradas
+// Salidas: sin retorno
+// Descripcion:Funcion que lee los archivos y calcula.
+void *readData() {
   char row[MAX];
   int readChunks = 0, currentYear = 0, currentIndex = 0;
   // Mientras el archivo no tenga EOF
@@ -32,6 +91,7 @@ void *readData(void *arg) {
       // Mover estos calculos a una funcion independiente?
       // Primero, encuentro de que año es el juego
       currentYear = currentGame.year;
+
       // Con una resta encuentro el index correspondiente
       if (!currentYear) {
         break;
@@ -76,11 +136,14 @@ void *readData(void *arg) {
         return 0;
       }
       fseek(gameData, currentPos, SEEK_SET);
+
     }
     pthread_mutex_unlock(&mutex);
   }
   pthread_exit(NULL);
 }
+
+
 
 int main(int argc, char *argv[]) {
   // --------------------------------------------------------------
@@ -94,9 +157,8 @@ int main(int argc, char *argv[]) {
   int minPrice = 0;
   int threadsAmount = 1;
   int showData = 0;
-  FILE *og;
-  int x = 0;
-  while ((flags = getopt(argc, argv, "i:o:d:p:c:t:b")) != -1)
+  
+  while ((flags = getopt(argc, argv, "i:o:d:p:n:c:b")) != -1)
     switch (flags) {
     case 'i':
       strncpy(file, optarg, sizeof(file));
@@ -106,29 +168,29 @@ int main(int argc, char *argv[]) {
       break;
     case 'd':
       year = atoi(optarg);
-      if (year < 1980) {
-        printf("ERROR: año minimo debe ser mayor o igual a 1980");
+      if (year < 1980 || year>2023) {
+        printf("ERROR: año minimo debe ser mayor o igual a 1980\n");
         exit(1);
       }
       break;
     case 'p':
       minPrice = atoi(optarg);
-      if (!minPrice || minPrice > 100) {
-        printf("ERROR: Valor minimo debe ser mayor o igual a 0");
+      if (minPrice<0 || minPrice > 100) {
+        printf("ERROR: Valor minimo debe ser mayor o igual a 0\n");
         exit(1);
       }
       break;
     case 'c':
       chunkSize = atoi(optarg);
       if (!chunkSize || chunkSize > 500) {
-        printf("ERROR: Tamaño de chunk debe ser mayor a 0");
+        printf("ERROR: Tamaño de chunk debe ser mayor a 0\n");
         exit(1);
       }
       break;
-    case 't':
+    case 'n':
       threadsAmount = atoi(optarg);
       if (!threadsAmount || threadsAmount > 100) {
-        printf("ERROR: Cantidad de hilos debe ser mayor a 0 y menor a 100");
+        printf("ERROR: Cantidad de hilos debe ser mayor a 0 y menor a 100\n");
         exit(1);
       }
       break;
@@ -145,13 +207,8 @@ int main(int argc, char *argv[]) {
     perror("Error: Archivo inexistente o corrupto");
     return 0;
   }
-  // Testing variables!!
-  chunkSize = 6;
-  threadsAmount = 40;
-  pthread_t tid[threadsAmount];
-  char endRead[MAX], endString[MAX];
-  float division;
 
+  pthread_t tid[threadsAmount];
   // Creo un vector principal con los datos para cada año presente
   // Se les asigna datos genericos para llenar el vector
   for (int i = startingYear; i < finishingYear; i++) {
@@ -163,40 +220,17 @@ int main(int argc, char *argv[]) {
 
   // Creo los hilos segun la cantidad ingresada
   for (int i = 0; i < threadsAmount; i++) {
-    pthread_create(&tid[i], NULL, readData, NULL);
+    pthread_create(&tid[i], NULL, (void*)readData, NULL);
   }
   // Espero al termino de los hilos
   for (int i = 0; i < threadsAmount; i++) {
     pthread_join(tid[i], NULL);
   }
-  int full = 0;
 
-  for (int i = 0; i < cvector_size(yearlyData); i++) {
-    // Si el año recibio datos
-    if (yearlyData[i].total) {
-      printf("--------------------Año %d---------------------\n",
-             yearlyData[i].year);
-      printf("El juegos mas caro fue %s con %.1f\n", yearlyData[i].maxName,
-             yearlyData[i].maxPrice);
-      printf("El juegos mas caro fue %s con %.1f\n", yearlyData[i].minName,
-             yearlyData[i].minPrice);
-      printf("El precio promedio fue de $%.1f\n",
-             yearlyData[i].sumPrice / yearlyData[i].totalpagados);
-      printf("El porcentaje de juegos para windows fue de %.1f\n",
-             (division = (float)yearlyData[i].win * 100 / yearlyData[i].total));
-      printf("El porcentaje de juegos para Linux fue de %.1f\n",
-             (division = (float)yearlyData[i].lin * 100 / yearlyData[i].total)),
-          printf("El porcentaje de juegos para Mac fue de %.1f\n",
-                 (division =
-                      (float)yearlyData[i].mac * 100 / yearlyData[i].total));
-      printf("--------------------Juegos Gratis---------------------\n");
-      printf("%s\n", yearlyData[i].juegosGratis);
-      full += yearlyData[i].total;
-    }
-  }
-  printf("%d", full);
-  // cvector_free(yearlyData);
-  // free(tid[threadsAmount]);
+  //Creo el archivo de salida y lo muestro por consola
+  createExitFile(exitFile, year, minPrice);
+  if(showData==1) showResults(exitFile);
+
   fclose(gameData);
   pthread_mutex_destroy(&mutex);
   return 1;
