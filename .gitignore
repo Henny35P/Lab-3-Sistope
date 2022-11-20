@@ -3,6 +3,7 @@
 
 # Text data
 *.csv
+*.txt
 
 # Object files
 *.o

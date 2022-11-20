@@ -14,7 +14,6 @@ pthread_mutex_t mutex;
 cvector_vector_type(GameData) yearlyData = NULL;
 long int currentPos;
 
-
 // Entradas: nombre de salida
 // Salidas: sin retorno
 // Descripcion:Funcion que recibe el nombre de salida del archivo generado, lo
@@ -34,41 +33,42 @@ void showResults(char *nombreSalida) {
   free(contents);
 }
 
-
 // Entradas: nombre de salida, año minimo y precio minimo
 // Salidas: sin retorno
 // Descripcion:Funcion que crea el archivo de salida
 
-void createExitFile(char exportFile[MAX], int minimunYear,int minimunPrice){
+void createExitFile(char exportFile[MAX], int minimunYear, int minimunPrice) {
   FILE *toExport;
-  toExport = fopen(exportFile,"w+");
+  toExport = fopen(exportFile, "w+");
   float division;
   int full = 0;
   for (int i = 0; i < cvector_size(yearlyData); i++) {
     // Si el año recibio datos
-    if (yearlyData[i].total && yearlyData[i].minPrice>=minimunPrice && yearlyData[i].year>=minimunYear){
-      fprintf(toExport,"--------------------Año %d---------------------\n",
-             yearlyData[i].year);
-      fprintf(toExport,"El juegos mas caro fue %s con %.1f\n", yearlyData[i].maxName,
-             yearlyData[i].maxPrice);
-      fprintf(toExport,"El juegos mas barato fue %s con %.1f\n", yearlyData[i].minName,
-             yearlyData[i].minPrice);
-      fprintf(toExport,"El precio promedio fue de $%.1f\n",
-             yearlyData[i].sumPrice / yearlyData[i].totalpagados);
-             full += yearlyData[i].total;
-      fprintf(toExport,"El porcentaje de juegos para windows fue de %.1f\n",
-             (division = (float)yearlyData[i].win * 100 / yearlyData[i].total));
-     fprintf(toExport,"El porcentaje de juegos para Linux fue de %.1f\n",
-             (division = (float)yearlyData[i].lin * 100 / yearlyData[i].total)),
-          fprintf(toExport,"El porcentaje de juegos para Mac fue de %.1f\n",
-                 (division =
-                      (float)yearlyData[i].mac * 100 / yearlyData[i].total));
-      fprintf(toExport,"--------------------Juegos Gratis---------------------/\n");
-      fprintf(toExport,"%s\n", yearlyData[i].juegosGratis);
-      full += yearlyData[i].total;
+    if (yearlyData[i].total && yearlyData[i].minPrice >= minimunPrice &&
+        yearlyData[i].year >= minimunYear) {
+      fprintf(toExport, "--------------------Año %d---------------------\n",
+              yearlyData[i].year);
+      fprintf(toExport, "El juegos mas caro fue %s con %.1f\n",
+              yearlyData[i].maxName, yearlyData[i].maxPrice);
+      fprintf(toExport, "El juegos mas barato fue %s con %.1f\n",
+              yearlyData[i].minName, yearlyData[i].minPrice);
+      fprintf(toExport, "El precio promedio fue de $%.1f\n",
+              yearlyData[i].sumPrice / yearlyData[i].totalpagados);
+      fprintf(
+          toExport, "El porcentaje de juegos para windows fue de %.1f\n",
+          (division = (float)yearlyData[i].win * 100 / yearlyData[i].total));
+      fprintf(
+          toExport, "El porcentaje de juegos para Linux fue de %.1f\n",
+          (division = (float)yearlyData[i].lin * 100 / yearlyData[i].total)),
+          fprintf(toExport, "El porcentaje de juegos para Mac fue de %.1f\n",
+                  (division =
+                       (float)yearlyData[i].mac * 100 / yearlyData[i].total));
+      fprintf(toExport,
+              "--------------------Juegos Gratis---------------------/\n");
+      fprintf(toExport, "%s\n", yearlyData[i].juegosGratis);
     }
   }
-  
+  fclose(toExport);
 }
 // Entradas: Sin entradas
 // Salidas: sin retorno
@@ -136,14 +136,11 @@ void *readData() {
         return 0;
       }
       fseek(gameData, currentPos, SEEK_SET);
-
     }
     pthread_mutex_unlock(&mutex);
   }
   pthread_exit(NULL);
 }
-
-
 
 int main(int argc, char *argv[]) {
   // --------------------------------------------------------------
@@ -157,7 +154,7 @@ int main(int argc, char *argv[]) {
   int minPrice = 0;
   int threadsAmount = 1;
   int showData = 0;
-  
+
   while ((flags = getopt(argc, argv, "i:o:d:p:n:c:b")) != -1)
     switch (flags) {
     case 'i':
@@ -168,14 +165,14 @@ int main(int argc, char *argv[]) {
       break;
     case 'd':
       year = atoi(optarg);
-      if (year < 1980 || year>2023) {
+      if (year < 1980 || year > 2023) {
         printf("ERROR: año minimo debe ser mayor o igual a 1980\n");
         exit(1);
       }
       break;
     case 'p':
       minPrice = atoi(optarg);
-      if (minPrice<0 || minPrice > 100) {
+      if (minPrice < 0 || minPrice > 100) {
         printf("ERROR: Valor minimo debe ser mayor o igual a 0\n");
         exit(1);
       }
@@ -220,16 +217,17 @@ int main(int argc, char *argv[]) {
 
   // Creo los hilos segun la cantidad ingresada
   for (int i = 0; i < threadsAmount; i++) {
-    pthread_create(&tid[i], NULL, (void*)readData, NULL);
+    pthread_create(&tid[i], NULL, (void *)readData, NULL);
   }
   // Espero al termino de los hilos
   for (int i = 0; i < threadsAmount; i++) {
     pthread_join(tid[i], NULL);
   }
 
-  //Creo el archivo de salida y lo muestro por consola
+  // Creo el archivo de salida y lo muestro por consola
   createExitFile(exitFile, year, minPrice);
-  if(showData==1) showResults(exitFile);
+  if (showData == 1)
+    showResults(exitFile);
 
   fclose(gameData);
   pthread_mutex_destroy(&mutex);
