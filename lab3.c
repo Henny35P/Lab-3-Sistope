@@ -1,11 +1,6 @@
 #include "cvector.h"
 #include "cvector_utils.h"
-#include "game.h"
-#include <pthread.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
+#include "funciones.h"
 
 FILE *gameData;
 int chunkSize = 0, startingYear = 1990, finishingYear = 2030;
@@ -13,25 +8,6 @@ int testGlobal = 0;
 pthread_mutex_t mutex;
 cvector_vector_type(GameData) yearlyData = NULL;
 long int currentPos;
-
-// Entradas: nombre de salida
-// Salidas: sin retorno
-// Descripcion:Funcion que recibe el nombre de salida del archivo generado, lo
-// lee y lo muestra por consola.
-void showResults(char *nombreSalida) {
-  FILE *fich;
-  if ((fich = fopen(nombreSalida, "r")) == NULL) {
-    printf(" Error en la apertura. Es posible que el fichero no exista \n ");
-  }
-  char *contents = NULL;
-  size_t len = 32;
-
-  while (getline(&contents, &len, fich) != -1) {
-    printf("%s", contents);
-  }
-  fclose(fich);
-  free(contents);
-}
 
 // Entradas: nombre de salida, año minimo y precio minimo
 // Salidas: sin retorno
